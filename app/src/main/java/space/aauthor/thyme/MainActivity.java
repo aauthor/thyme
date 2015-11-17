@@ -2,7 +2,6 @@ package space.aauthor.thyme;
 
 import android.os.Bundle;
 import android.support.design.widget.FloatingActionButton;
-import android.support.design.widget.Snackbar;
 import android.support.v7.app.AppCompatActivity;
 import android.support.v7.widget.Toolbar;
 import android.view.View;
@@ -13,12 +12,9 @@ import android.widget.TextView;
 
 public class MainActivity extends AppCompatActivity {
 
-    private String state;
     private FloatingActionButton fab;
     private TextView statusView;
-
-    String ON = "ON";
-    String OFF = "OFF";
+    private Thymer thymer;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -27,41 +23,19 @@ public class MainActivity extends AppCompatActivity {
         Toolbar toolbar = (Toolbar) findViewById(R.id.toolbar);
         setSupportActionBar(toolbar);
 
-
-        fab = (FloatingActionButton) findViewById(R.id.fab);
         statusView = (TextView) findViewById(R.id.statusView);
+        fab = (FloatingActionButton) findViewById(R.id.fab);
+        final Vibrator vibrator = (Vibrator) getSystemService(VIBRATOR_SERVICE);
+        thymer = new Thymer(this);
+
+        Thyme.viewThymer(statusView, thymer);
+
         fab.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View view) {
-                Vibrator v = (Vibrator) getSystemService(VIBRATOR_SERVICE);
-                // Vibrate for 500 milliseconds
-                v.vibrate(500);
-
-                updateState();
-                if (state == ON) {
-                    showOn();
-                } else {
-                    showOff();
-                }
-
+                Thyme.toggleNotifications(statusView, thymer, vibrator);
             }
         });
-    }
-
-    public void updateState() {
-        if (state == ON) {
-            state = OFF;
-        } else {
-            state = ON;
-        }
-    }
-
-    public void showOff() {
-        statusView.setText("Off");
-    }
-
-    public void showOn() {
-        statusView.setText("On");
     }
 
     @Override

@@ -9,20 +9,25 @@ import android.os.SystemClock;
 
 public class Thymer {
 
-    private boolean isEnabled;
     private Context context;
-    private PendingIntent timePendingIntent;
-    private int delay = 15000; // fifteen seconds
+    private int delay = 30 * 60 * 1000; // thirty minutes
     private AlarmManager alarmManager;
-
+    private Notification notification;
+    private Intent notificationIntent;
 
     Thymer(Context context) {
         this.context = context;
         alarmManager = (AlarmManager)context.getSystemService(Context.ALARM_SERVICE);
+        notification = createNotification();
+        notificationIntent = new Intent(context, NotificationPublisher.class)
+            .putExtra(NotificationPublisher.NOTIFICATION_ID, 1)
+            .putExtra(NotificationPublisher.NOTIFICATION, notification);
     }
 
     public boolean isEnabled(){
-        return isEnabled;
+        PendingIntent notifyUserAfterTime = PendingIntent.getBroadcast(
+                context, 0, notificationIntent, PendingIntent.FLAG_NO_CREATE);
+        return notifyUserAfterTime != null;
     }
 
     public void toggle() {
@@ -34,15 +39,18 @@ public class Thymer {
     }
 
     public void enable() {
-        Notification notification = createNotification();
-        Intent notificationIntent = new Intent(context, NotificationPublisher.class);
-        notificationIntent.putExtra(NotificationPublisher.NOTIFICATION_ID, 1);
-        notificationIntent.putExtra(NotificationPublisher.NOTIFICATION, notification);
-        timePendingIntent = PendingIntent.getBroadcast(context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        PendingIntent notifyUserAfterTime = PendingIntent.getBroadcast(
+                context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
         long futureInMillis = SystemClock.elapsedRealtime() + delay;
 
-        alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, futureInMillis, delay, timePendingIntent);
-        isEnabled = true;
+        alarmManager.setRepeating(AlarmManager.ELAPSED_REALTIME_WAKEUP, futureInMillis, delay, notifyUserAfterTime);
+    }
+
+    public void disable() {
+        PendingIntent notifyUserAfterTime = PendingIntent.getBroadcast(
+                context, 0, notificationIntent, PendingIntent.FLAG_UPDATE_CURRENT);
+        alarmManager.cancel(notifyUserAfterTime);
+        notifyUserAfterTime.cancel();
     }
 
     private Notification createNotification() {
@@ -53,11 +61,6 @@ public class Thymer {
         builder.setSmallIcon(R.drawable.ic_stat_notification);
         builder.setVibrate(vibrationPattern);
         return builder.build();
-    }
-
-    public void disable() {
-        alarmManager.cancel(timePendingIntent);
-        isEnabled = false;
     }
 
 }
